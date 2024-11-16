@@ -1,0 +1,85 @@
+Model the following Laptop manufacturing information system as a
+graph model, and answer the following queries using Cypher.
+Consider an Laptop manufacturing industries which produces different
+types of laptops. A customer can buya laptop, recommend or rate a the
+product.
+1. Identify the labels and relationships, along with their properties, and
+draw a high-level Graph model. [3]
+2. Create nodes and relationships, along with their properties, and
+visualize your actual Graph model.[3]
+3. Answer the Queries
+a. List the characteristics of…….. laptop. [3]
+b. List the name of customers who bought a “DELL” company
+laptop [3]
+c. List the customers who purchase a device on “26/01/2023”[4]
+d. List the most recommended device.[4]
+
+
+
+
+# Step 1: Open MongoDB    using mongosh
+mongosh
+
+# Step 2: Create a database for the Laptop manufacturing information system graph model
+use laptop_manufacturing_db
+
+# Step 3: Create collections and insert data for laptops, customers, and reviews
+db.laptops.insertMany([
+  { _id: 1, brand: "DELL", model: "Inspiron 15", characteristics: ["Intel i5", "8GB RAM", "512GB SSD"] },
+  { _id: 2, brand: "HP", model: "Pavilion 14", characteristics: ["Intel i7", "16GB RAM", "1TB SSD"] },
+  { _id: 3, brand: "Lenovo", model: "ThinkPad X1", characteristics: ["Intel i9", "32GB RAM", "1TB SSD"] }
+])
+
+db.customers.insertMany([
+  { _id: 1, name: "Alice", purchased_laptops: [1, 2], review: { laptopId: 1, rating: 5, recommendation: "Yes" }, purchase_date: "2023-01-25" },
+  { _id: 2, name: "Bob", purchased_laptops: [1], review: { laptopId: 1, rating: 4, recommendation: "No" }, purchase_date: "2023-01-26" },
+  { _id: 3, name: "Charlie", purchased_laptops: [3], review: { laptopId: 3, rating: 5, recommendation: "Yes" }, purchase_date: "2023-01-20" }
+])
+
+# Step 4: Write the queries to fetch the required results
+
+# a. List the characteristics of a given laptop, for example, "DELL Inspiron 15"
+db.laptops.aggregate([
+  { $match: { brand: "DELL", model: "Inspiron 15" } },
+  { $project: { characteristics: 1 } }
+])
+
+# b. List the name of customers who bought a "DELL" laptop
+db.customers.aggregate([
+  { $match: { "purchased_laptops": 1 } },
+  { $lookup: {
+    from: "laptops",
+    localField: "purchased_laptops",
+    foreignField: "_id",
+    as: "laptop_info"
+  }},
+  { $unwind: "$laptop_info" },
+  { $match: { "laptop_info.brand": "DELL" } },
+  { $project: { name: 1 } }
+])
+
+# c. List the customers who purchased a device on "26/01/2023"
+db.customers.aggregate([
+  { $match: { purchase_date: "2023-01-26" } },
+  { $project: { name: 1 } }
+])
+
+# d. List the most recommended device (laptop with highest recommendation rating)
+db.laptops.aggregate([
+  { $lookup: {
+    from: "customers",
+    localField: "_id",
+    foreignField: "purchased_laptops",
+    as: "customer_reviews"
+  }},
+  { $unwind: "$customer_reviews" },
+  { $match: { "customer_reviews.review.recommendation": "Yes" } },
+  { $group: { _id: "$model", recommendation_count: { $sum: 1 } } },
+  { $sort: { recommendation_count: -1 } },
+  { $limit: 1 },
+  { $project: { _id: 0, model: "$_id", recommendation_count: 1 } }
+])
+
+# Step 5: Exit MongoDB   
+exit
+

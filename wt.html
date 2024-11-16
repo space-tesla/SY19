@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Progress Bar with Color Change</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        .progress-container {
+            width: 80%;
+            height: 30px;
+            background-color: lightgray;
+            margin: 20px auto;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: blue;
+            transition: background-color 0.5s;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkgreen;
+        }
+    </style>
+</head>
+<body>
+    <h1>Start Download</h1>
+    <button onclick="startDownload()">Start Download</button>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <script>
+        function startDownload() {
+            let progressBar = document.getElementById("progressBar");
+            let width = 0;
+            let colorIndex = 0;
+            const colors = ["blue", "red", "green", "orange", "purple"];
+
+            let interval = setInterval(function() {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    alert("Download completed");
+                } else {
+                    width += 10; // Increment by 10%
+                    progressBar.style.width = width + "%";
+
+                    if (Math.floor(width / 30) > colorIndex) {
+                        colorIndex++;
+                        progressBar.style.backgroundColor = colors[colorIndex % colors.length];
+                    }
+                }
+            }, 1000); // 1 second interval
+        }
+    </script>
+</body>
+</html>
